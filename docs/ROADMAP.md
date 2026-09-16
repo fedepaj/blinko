@@ -8,7 +8,7 @@ portabile, app iOS e Android, repository indipendenti.
 
 | Problema | Evidenza | Dove si risolve |
 |---|---|---|
-| Loop di fault del Nano R4 troppo lento: chip di ~84 µs invece di 30 (il ritardo software si somma al lavoro per chip) | fit sui run del frame del LED rosso: 16 righe/chip, pacchetto da 1100 righe > macchia (450) | firmware: temporizzazione a scadenza con contatore di cicli. Sulla Nano 33 BLE il loop è ~30 % lento ma decodifica |
+| ~~Loop di fault troppo lento (chip ~84 µs invece di 30 sul R4, ~40 sulla Nano 33)~~ **risolto il 16/9**: temporizzazione a scadenza (DWT sul R4, `counter` in polling su Zephyr); verificato dal vivo: 6.0 righe/chip, fault decodificato su entrambe | fit sui run del frame del LED rosso: 16 righe/chip, pacchetto da 1100 righe > macchia (450) | fatto |
 | Saturazione: il rosso del R4 satura a ISO minimo; i chip spenti si accorciano di un'esposizione (run ON 36 righe, OFF 6) | frame del fault, `peak=255 sat=0.19` | ricevitore: canale non saturo (il verde vede il rosso attenuato) + compensazione dello smear; firmware: opzione dimming PWM |
 | Movimento: falsi piloti corrompono la matrice colore (cond 0.9 → 0.05), ROI per frame | misura del 15/9 sera | fase 3 |
 | Pochi messaggi con 100 pkt/s | il demo manda solo STATUS ogni 5 s; i falsi positivi del CRC-8 (1/256 dei sync corrotti) avvelenano il sistema lineare e azzerano lo slot | fase 1 (CRC-16, soft decoding) + contatore di reset esposto nell'app |
