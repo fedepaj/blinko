@@ -1,0 +1,15 @@
+[submodule "core"]
+	path = core
+	url = ../rslog-core.git
+[submodule "arduino"]
+	path = arduino
+	url = ../rslog-arduino.git
+[submodule "zephyr-module"]
+	path = zephyr-module
+	url = ../rslog-zephyr.git
+[submodule "ios"]
+	path = ios
+	url = ../rslog-ios.git
+[submodule "android"]
+	path = android
+	url = ../rslog-android.git

@@ -1,0 +1,9 @@
+.venv/
+build/
+toolchain/
+zephyr/
+modules/
+.west/
+__pycache__/
+.DS_Store
+Gemini_Generated_Image_*.jpeg
