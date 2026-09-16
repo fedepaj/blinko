@@ -12,31 +12,33 @@ raffiche; il fault lampeggia sempre e solo sul LED rosso ("red LED of death").
 
 Ispirato a [Measuring rolling shutter with a strobing LED](https://joancharmant.com/blog/measuring-rolling-shutter-with-a-strobing-led/).
 
-## Struttura
+## Repository
 
-| Percorso | Contenuto |
-|---|---|
-| `docs/PLAN.md` | piano di progetto, architettura, fasi |
-| `docs/PROTOCOL.md` | formato dei pacchetti e del carosello |
-| `docs/CALIBRATION.md` | misura del tempo di riga e scelta di `T_chip` |
-| `core/` | C portabile: protocollo, trasmettitore, decoder, assembler |
-| `firmware/libraries/RSLog` | libreria Arduino (timer ISR, fault handler, EEPROM) |
-| `firmware/sketches/` | `rslog_demo` (comandi seriali), `strobe_calib` |
-| `ios/RSLogViewer` | app SwiftUI (xcodegen) |
-| `zephyr-modules/rslog` | modulo Zephyr (nRF52840 / Nano 33 BLE): `CONFIG_RSLOG=y` → red LED of death |
-| `zephyr-app/` | demo Zephyr con shell USB, manifest west, `flash.sh` |
-| `android/RSLogViewer` | app Android (Camera2 + core C via NDK), APK con `make android` |
-| `docs/ZEPHYR.md`, `docs/ANDROID.md` | port Zephyr e app Android |
-| `tools/` | simulatore rolling shutter, test, decodifica offline di foto |
+Questo è il repo ombrello: ogni componente è un repository indipendente,
+incluso qui come submodule (`git submodule update --init --recursive`).
+
+| Submodule | Repo | Contenuto |
+|---|---|---|
+| `core/` | rslog-core | protocollo, encoder, decoder, ricevitore in C portabile + tool Python |
+| `arduino/` | rslog-arduino | libreria Arduino `RSLog` (Nano R4 / UNO R4) e sketch demo |
+| `zephyr-module/` | rslog-zephyr | modulo Zephyr `rslog` (`CONFIG_RSLOG=y`) e demo con shell USB |
+| `ios/` | rslog-ios | app iPhone (SwiftUI, AVFoundation) |
+| `android/` | rslog-android | app Android (Kotlin, Camera2, NDK) |
+| `docs/` | — | piano, roadmap, calibrazione |
+| `assets/` | — | logo e icone |
+
+Ogni componente porta il proprio `core/` come submodule; dopo una modifica al
+core: commit in `core/`, poi `make sync-core` e commit nei componenti.
 
 ## Quick start
 
 ```sh
+make setup               # submodule + venv
 make test                # simulatore + decoder + assembler
 make fw-upload           # firmware demo sul Nano R4 (porta auto)
 make ios-install         # app su iPhone (firma automatica, team in project.yml)
 make zephyr-flash        # demo Zephyr sulla Nano 33 BLE (touch 1200 baud automatico)
-make android             # APK Android in build/RSLog-android-debug.apk
+make android             # APK Android in android/build/RSLog-android-debug.apk
 ```
 
 Poi: apri la seriale a 115200 (`info ciao`, `warn x`, `fatal y`, `hf`,
