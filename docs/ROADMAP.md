@@ -12,6 +12,8 @@ portabile, app iOS e Android, repository indipendenti.
 | Saturazione: il rosso del R4 satura a ISO minimo; i chip spenti si accorciano di un'esposizione (run ON 36 righe, OFF 6). **Mitigato il 17/9 nel ricevitore**: il nucleo saturo perde i gap da 1 chip ma l'alone intorno li conserva → i profili escludono le colonne che saturano in ≥ 2 righe (`rs_frame.c`, `RS_SAT_LEVEL`). Corpus: 132 → 315 pacchetti (ROI globale), 124 → 337 (multi); clip del fault R4 da 3.5 a ~20 pkt/s | frame del fault, `peak=255 sat=0.19`; replay del corpus | resta lato firmware: chip 45–60 µs o dimming PWM sulle schede molto luminose. Il decoder "a fronti" (`use_edges`) è stato provato e scartato: produceva pacchetti finti tutti a zero |
 | Movimento: falsi piloti corrompono la matrice colore (cond 0.9 → 0.05), ROI per frame. **Causa principale trovata il 17/9**: il blocco pilota con P=8 (432 righe) era più alto della macchia → aggancio RGB raro; ora `RS_PILOT_P=4`. Nel sintetico 2-D (`synth2d.py`) l'aggancio arriva al 95 % dei frame fino a 40 px/frame | misura del 15/9 sera; sweep sintetico | verifica dal vivo con nuove registrazioni (le registrazioni "Motion" del corpus sono con P=8 e non possono agganciare) |
 | Pochi messaggi con 100 pkt/s | il demo manda solo STATUS ogni 5 s; i falsi positivi del CRC-8 (1/256 dei sync corrotti) avvelenano il sistema lineare e azzerano lo slot. **Recupero fatto il 17/9** (fase 1.2/1.4 senza allungare il pacchetto): anello delle righe grezze, re-soluzione leave-one-out al fallimento del CRC del messaggio, due "strike" su META/CRC | test di corruzione: 55 messaggi recuperati, reset 488 → 97, 0 pacchetti errati | contatore di reset già esposto (`rs_rx_resets`) |
+| LED RGB a 3 die: da vicino i tre dischi di colore sono sfalsati di ~40 % del diametro (passo dei die / apertura), con il passo lungo l'asse di scansione nessuna riga contiene i tre impulsi pilota → aggancio RGB impossibile sul R4 | registrazioni del 17/9 mattina: R4 rgb 0 pkt/s, 15 blocchi pilota visibili ma nessuno riconosciuto | **fatto il 17/9**: decodifica diretta dei tre canali camera quando la luce è tricolore e non c'è calibrazione (`rs_rx` modo 2). Corpus 438 → 814 pacchetti; R4 rgb 7.6, 33 rgb 8–50 pkt/s. Piloti ogni 30 ms invece di 100 (3.6 % di overhead) per agganciare più spesso |
+| Distanza: a 30 cm la macchia del LED è ~60 righe, il pacchetto ne occupa ~400 → nessuna decodifica possibile | "R4 rgb 30 cm", "Entrambi" | limite fisico con chip da 30 µs: la macchia deve essere alta almeno ~450 righe (≈ 10–12 cm col grandangolo 1×). Alternative: chip più corti (meno righe/chip) o ottica ultra-grandangolare |
 | Tracce fantasma ai bordi quando il LED è spento (rumore di colonna allungato dal filtro verticale) | replay multi del corpus: 4 tracce su una scheda sola | **risolto il 17/9**: la segmentazione scarta componenti larghe 1 cella e macchie sotto 48 / min+40 |
 
 ## Fase 0 — Strumenti (prima di tutto)
@@ -89,6 +91,13 @@ corpus). Restano 3 (fusione di macchie che trasmettono lo stesso pacchetto) e 4.
 4. Identità: board id e versione firmware nello STATUS → "Nano R4 #A1".
 5. UI: marker sui centroidi nell'anteprima con colore e ultimo messaggio;
    console filtrabile per sorgente.
+
+## Fase 4b — Sessioni remote (proposta 17/9)
+
+L'app apre un server TCP (porta 7777): manda frame `.rsrec` e statistiche in
+tempo reale e accetta comandi (record, impostazioni). Sul Mac `rslive.py` si
+collega via Wi-Fi o via USB con `iproxy` (libimobiledevice) e pilota le schede
+dalla seriale: registrazioni e prove ripetibili senza toccare il telefono.
 
 ## Fase 5 — Firmware
 
