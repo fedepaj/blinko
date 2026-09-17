@@ -190,6 +190,19 @@ Lab mode: replay di una registrazione dentro l'app con lo stesso ricevitore
 (`ReplayEngine`, comando remoto `replay NAME`; 240 frame in 1 s sull'iPhone).
 Android: da allineare (filtro, storico) dopo la prova sul dispositivo.
 
+## Fase 7 — UNO Q + GigaDisplay + camera CSI (in corso, 17/9)
+
+Repo `unoq/` (blinko-unoq): kiosk Python sul modello di `uno_flirone` (autologin →
+sessione X → app GTK a schermo intero in portrait 480×800). Sorgente frame: camera CSI
+sulla Media Carrier via GStreamer `v4l2src` in BGRx; ricevitore: il core C via ctypes
+(`rs_multi_process` sul frame); UI: anteprima con marker, linee tra luci della stessa
+scheda, id scheda, console con storico, filtro sorgente e clear a tocco. Modalità
+`--headless --source rec.rsrec` per lo sviluppo sul Mac: verificata sul corpus.
+Da verificare sulla scheda: formato e cadenza della camera, **esposizione minima**
+(serve ~15–30 µs: `v4l2-ctl --list-ctrls`; se non scende, chip più lunghi sulle
+schede), costo CPU su A53 a 1080p, display e touch con il DTB ibrido del progetto
+flir. `deploy/install.sh` installa in /opt/blinko e abilita la sessione.
+
 ## Nome
 
 Scelto il 17/9: **Blinko** (corto, pronunciabile, "lampeggia"). Il rinominare
