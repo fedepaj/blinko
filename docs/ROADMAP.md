@@ -107,6 +107,18 @@ l'iPhone a 40 fps; pesi calcolati ogni 4 righe e media solo sulle colonne pesate
 Le tracce che non hanno mai decodificato compaiono solo dopo 12 frame (riflessi
 e puntini ai bordi non lampeggiano più come marker).
 
+Stato 17/9 sera: fatti anche i punti 3 e 4. Due luci della stessa scheda si
+riconoscono dalla relazione del carosello: la differenza dei seed di due pacchetti
+dello stesso slot è uguale alla distanza in pacchetti (righe nel frame più tempo tra
+i frame) per il numero di canali, più la differenza di canale, a meno dei tripletti
+di controllo; l'evidenza si accumula con decadimento e isteresi, il gruppo prende
+l'id minore (`rs_multi_track_group`), i messaggi escono con l'id del gruppo e le
+app disegnano una linea tratteggiata tra le luci collegate. Ogni scheda annuncia
+`id=xxxx` (FNV a 16 bit dell'id di fabbrica: `RSLog.boardId()`, `rslog_board_id()`)
+nello STATUS di boot e in quello periodico della demo; l'app lo mostra sul marker.
+Verificato dal vivo: R4 (e844) con RGB e arancione collegati, Nano 33 (55ee)
+separata, nessun falso collegamento in 4 s di registrazione.
+
 Stato 17/9: punti 1, 2 e 5 fatti (`rs_frame_segment_rgb`, `rs_multi`, marker
 nell'anteprima iOS e Android, tag `src #n` in console; `replay.py --multi` per il
 corpus). Restano 3 (fusione di macchie che trasmettono lo stesso pacchetto) e 4.
@@ -150,7 +162,7 @@ loop di morte dura 4 s e poi la scheda riparte annunciando il record persistito.
 1. Temporizzazione a scadenza nel loop di fault (DWT su R4, `counter` su Zephyr).
 2. Backend di log Zephyr (`LOG_ERR()` → LED, `CONFIG_RSLOG_LOG_BACKEND`);
    `RSLog.printf` per Arduino.
-3. Board id + versione nello STATUS; mini backtrace nel fault (2–3 LR).
+3. ~~Board id~~ (fatto il 17/9) + versione nello STATUS; mini backtrace nel fault (2–3 LR).
 4. Port di prova: GIGA R1 (STM32H747, LED RGB, Zephyr in-tree) e UNO Q.
 5. Dimming PWM opzionale per canale.
 
