@@ -20,7 +20,7 @@ setup:
 	test -d .venv || (python3 -m venv .venv && .venv/bin/pip install -q numpy scipy pillow pyserial matplotlib west pyelftools)
 
 sync-core:
-	@rev=$$(git -C core rev-parse HEAD); for d in arduino zephyr-module ios android; do \
+	@rev=$$(git -C core rev-parse HEAD); for d in arduino zephyr-module ios android unoq; do \
 	  git -C $$d/core fetch -q ../../core 2>/dev/null || git -C $$d/core fetch -q "$(CURDIR)/core"; \
 	  git -C $$d/core checkout -q $$rev && echo "$$d/core -> $$rev"; done
 
@@ -46,5 +46,7 @@ live:             # remote session client, e.g. make live ARGS="record --seconds
 	.venv/bin/python ios/tools/rslive.py $(ARGS)
 android:
 	$(MAKE) -C android apk
+unoq-headless:    # UNO Q kiosk on a recording, on this computer: make unoq-headless REC=testdata/x.rsrec
+	$(PY) unoq/blinko_kiosk.py --source $(REC) --headless --fast
 status:
-	@for d in . core arduino zephyr-module ios android; do echo "== $$d"; git -C $$d status -sb | head -5; done
+	@for d in . core arduino zephyr-module ios android unoq; do echo "== $$d"; git -C $$d status -sb | head -5; done

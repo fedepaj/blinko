@@ -13,3 +13,6 @@
 [submodule "android"]
 	path = android
 	url = ../blinko-android.git
+[submodule "unoq"]
+	path = unoq
+	url = ../blinko-unoq.git
