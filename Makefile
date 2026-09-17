@@ -1,7 +1,7 @@
 # rslog — umbrella repository. Each component is an independent git repo (submodule).
 PY := $(CURDIR)/.venv/bin/python
 ZEPHYR_ENV := ZEPHYR_TOOLCHAIN_VARIANT=zephyr ZEPHYR_SDK_INSTALL_DIR=$(CURDIR)/toolchain/zephyr-sdk-1.0.1
-.PHONY: help setup sync-core test test-full fw fw-upload zephyr zephyr-flash ios ios-install android status
+.PHONY: help setup sync-core test test-full fw fw-upload zephyr zephyr-flash ios ios-install usb-forward live android status
 
 help:
 	@echo "make setup        init submodules, python venv"
@@ -10,6 +10,8 @@ help:
 	@echo "make fw-upload    Arduino demo on the Nano R4"
 	@echo "make zephyr-flash Zephyr demo on the Nano 33 BLE"
 	@echo "make ios-install  iOS app on the paired iPhone"
+	@echo "make usb-forward  USB tunnel to the app's remote session (port 7777)"
+	@echo "make live ARGS=.. drive the app: get | stats | watch | set K V | frame out.png | record --seconds 2 --note X --out DIR"
 	@echo "make android      Android debug APK"
 	@echo "make status       git status of every repo"
 
@@ -38,6 +40,10 @@ ios:
 	ios/build.sh
 ios-install:
 	ios/build.sh install launch
+usb-forward:      # USB tunnel to the app's remote session (then: make live ARGS="stats")
+	.venv/bin/pymobiledevice3 usbmux forward 7777 7777
+live:             # remote session client, e.g. make live ARGS="record --seconds 2 --note 'R4 rgb' --out testdata"
+	.venv/bin/python ios/tools/rslive.py $(ARGS)
 android:
 	$(MAKE) -C android apk
 status:

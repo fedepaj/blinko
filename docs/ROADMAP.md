@@ -92,12 +92,15 @@ corpus). Restano 3 (fusione di macchie che trasmettono lo stesso pacchetto) e 4.
 5. UI: marker sui centroidi nell'anteprima con colore e ultimo messaggio;
    console filtrabile per sorgente.
 
-## Fase 4b — Sessioni remote (proposta 17/9)
+## Fase 4b — Sessioni remote (fatta il 17/9)
 
-L'app apre un server TCP (porta 7777): manda frame `.rsrec` e statistiche in
-tempo reale e accetta comandi (record, impostazioni). Sul Mac `rslive.py` si
-collega via Wi-Fi o via USB con `iproxy` (libimobiledevice) e pilota le schede
-dalla seriale: registrazioni e prove ripetibili senza toccare il telefono.
+L'app apre un server TCP (porta 7777, Impostazioni > Debug per spegnerlo):
+statistiche a 5 Hz, messaggi decodificati, comandi `get/set/stats/messages/reset/
+frame/record`; `record` registra sul telefono e manda indietro il `.rsrec`.
+Dal Mac: `make usb-forward` (pymobiledevice3, tunnel USB) e `make live ARGS="..."`
+(`ios/tools/rslive.py`, anche come libreria). Le schede si pilotano con
+`tools/board.py r4|n33 "comando"`. Misurato: 1 s di registrazione (100 MB)
+scaricata in 4.5 s via USB.
 
 ## Fase 5 — Firmware
 
