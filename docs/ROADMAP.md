@@ -99,8 +99,12 @@ statistiche a 5 Hz, messaggi decodificati, comandi `get/set/stats/messages/reset
 frame/record`; `record` registra sul telefono e manda indietro il `.rsrec`.
 Dal Mac: `make usb-forward` (pymobiledevice3, tunnel USB) e `make live ARGS="..."`
 (`ios/tools/rslive.py`, anche come libreria). Le schede si pilotano con
-`tools/board.py r4|n33 "comando"`. Misurato: 1 s di registrazione (100 MB)
-scaricata in 4.5 s via USB.
+`tools/board.py r4|n33 "comando"`. Il recorder scrive a 119 fps senza perdere
+frame (buffer in pool, scrittura raw su coda in background: LZ4 comprimeva il
+rumore solo 1.4× a 15 ms/frame); 2 s = 240 frame = 495 MB, ~20 s via USB.
+La modalità registrazione manuale (tasto Record) è in Impostazioni > Debug,
+spenta di default; `record` remoto funziona sempre e di default cancella il
+file dal telefono dopo il trasferimento.
 
 ## Fase 5 — Firmware
 
