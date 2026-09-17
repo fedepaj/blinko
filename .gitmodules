@@ -1,15 +1,15 @@
 [submodule "core"]
 	path = core
-	url = ../rslog-core.git
+	url = ../blinko-core.git
 [submodule "arduino"]
 	path = arduino
-	url = ../rslog-arduino.git
+	url = ../blinko-arduino.git
 [submodule "zephyr-module"]
 	path = zephyr-module
-	url = ../rslog-zephyr.git
+	url = ../blinko-zephyr.git
 [submodule "ios"]
 	path = ios
-	url = ../rslog-ios.git
+	url = ../blinko-ios.git
 [submodule "android"]
 	path = android
-	url = ../rslog-android.git
+	url = ../blinko-android.git

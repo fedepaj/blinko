@@ -1,4 +1,4 @@
-# rslog — umbrella repository. Each component is an independent git repo (submodule).
+# blinko — umbrella repository. Each component is an independent git repo (submodule).
 PY := $(CURDIR)/.venv/bin/python
 ZEPHYR_ENV := ZEPHYR_TOOLCHAIN_VARIANT=zephyr ZEPHYR_SDK_INSTALL_DIR=$(CURDIR)/toolchain/zephyr-sdk-1.0.1
 .PHONY: help setup sync-core test test-full fw fw-upload zephyr zephyr-flash ios ios-install usb-forward live android status
@@ -29,13 +29,13 @@ test:
 test-full:
 	$(PY) core/tools/test_core.py
 fw:
-	arduino/build.sh rslog_demo
+	arduino/build.sh blinko_demo
 fw-upload:
-	arduino/build.sh rslog_demo upload
+	arduino/build.sh blinko_demo upload
 zephyr:
-	$(ZEPHYR_ENV) .venv/bin/west build -b arduino_nano_33_ble -d zephyr-module/build zephyr-module/samples/rslog_demo
+	$(ZEPHYR_ENV) .venv/bin/west build -b arduino_nano_33_ble -d zephyr-module/build zephyr-module/samples/blinko_demo
 zephyr-flash: zephyr
-	PY=$(PY) zephyr-module/samples/rslog_demo/flash.sh
+	PY=$(PY) zephyr-module/samples/blinko_demo/flash.sh
 ios:
 	ios/build.sh
 ios-install:

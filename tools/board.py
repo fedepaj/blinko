@@ -2,15 +2,15 @@
 """Send a command to a board's serial shell and print the reply.
 
   board.py r4  info            Nano R4 demo sketch (info warn err debug status fatal hf hang clear chip rgb burst strobe led stat)
-  board.py n33 "rslog stat"    Nano 33 BLE Zephyr shell
+  board.py n33 "blinko stat"    Nano 33 BLE Zephyr shell
   board.py list                ports and which board is on each
 
-Ports are matched by USB product name (Nano R4 / RSLog Nano33BLE), so the order of the
+Ports are matched by USB product name (Nano R4 / Blinko Nano33BLE), so the order of the
 /dev/cu.usbmodem* entries does not matter. Requires pyserial (in the umbrella .venv).
 """
 import glob, re, subprocess, sys, time
 
-NAMES = {"r4": ("Nano R4",), "n33": ("RSLog Nano33BLE", "Arduino Nano 33 BLE")}
+NAMES = {"r4": ("Nano R4",), "n33": ("Blinko Nano33BLE", "RSLog Nano33BLE", "Arduino Nano 33 BLE")}
 
 
 def usb_ports():

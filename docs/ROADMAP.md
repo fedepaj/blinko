@@ -1,4 +1,4 @@
-# RSLog — Roadmap
+# Blinko — Roadmap
 
 Stato al 16 settembre 2026: ricevitore allo stato "known good" (ROI globale,
 100+ pacchetti/s da fermo con RGB a 120 fps), protocollo v2, modulo Zephyr
@@ -25,7 +25,7 @@ portabile, app iOS e Android, repository indipendenti.
    valuta su registrazioni reali, non dal vivo.
 2. **Corpus** di registrazioni etichettate: fermo/moto lento/moto veloce,
    RGB/mono, fault, vicino/lontano, R4/Nano 33/GIGA, iPhone/Android.
-   Repo `rslog-testdata` (git-lfs).
+   Repo `blinko-testdata` (git-lfs).
 3. `make test` = simulazione + replay del corpus con soglie di regressione.
 4. `tools/board.py`: CLI unica per seriale R4 e shell Zephyr (`log`, `fatal`,
    `hf`, `rgb`, `burst`, `chip`, `stat`) usata dai test end-to-end.
@@ -114,7 +114,7 @@ i frame) per il numero di canali, più la differenza di canale, a meno dei tripl
 di controllo; l'evidenza si accumula con decadimento e isteresi, il gruppo prende
 l'id minore (`rs_multi_track_group`), i messaggi escono con l'id del gruppo e le
 app disegnano una linea tratteggiata tra le luci collegate. Ogni scheda annuncia
-`id=xxxx` (FNV a 16 bit dell'id di fabbrica: `RSLog.boardId()`, `rslog_board_id()`)
+`id=xxxx` (FNV a 16 bit dell'id di fabbrica: `Blinko.boardId()`, `blinko_board_id()`)
 nello STATUS di boot e in quello periodico della demo; l'app lo mostra sul marker.
 Verificato dal vivo: R4 (e844) con RGB e arancione collegati, Nano 33 (55ee)
 separata, nessun falso collegamento in 4 s di registrazione.
@@ -160,10 +160,10 @@ loop di morte dura 4 s e poi la scheda riparte annunciando il record persistito.
 ## Fase 5 — Firmware
 
 1. ~~Temporizzazione a scadenza nel loop di fault~~ (fatto il 16/9).
-2. ~~Backend di log Zephyr~~ (fatto il 17/9: `CONFIG_RSLOG_LOG_BACKEND`, livello massimo
-   inoltrato `CONFIG_RSLOG_LOG_BACKEND_LEVEL`, prefisso del modulo tolto, serve
-   `CONFIG_LOG_MODE_DEFERRED`; demo `rslog zlog wrn testo`). ~~`RSLog.printf`~~ (fatto:
-   `RSLogClass` è una `Print`, quindi `print/println/printf` → messaggi a `setPrintLevel`).
+2. ~~Backend di log Zephyr~~ (fatto il 17/9: `CONFIG_BLINKO_LOG_BACKEND`, livello massimo
+   inoltrato `CONFIG_BLINKO_LOG_BACKEND_LEVEL`, prefisso del modulo tolto, serve
+   `CONFIG_LOG_MODE_DEFERRED`; demo `blinko zlog wrn testo`). ~~`Blinko.printf`~~ (fatto:
+   `BlinkoClass` è una `Print`, quindi `print/println/printf` → messaggi a `setPrintLevel`).
 3. ~~Board id~~ (fatto) + versione nello STATUS; ~~mini backtrace nel fault~~ (fatto: fino a
    3 indirizzi di ritorno trovati sullo stack sopra il frame d'eccezione, log ERROR "bt …"
    copiato nel loop di morte; con il peso 3 del FAULT arriva dopo il FAULT stesso).
@@ -193,13 +193,13 @@ Android: da allineare (filtro, storico) dopo la prova sul dispositivo.
 ## Nome
 
 Scelto il 17/9: **Blinko** (corto, pronunciabile, "lampeggia"). Il rinominare
-(cartelle, librerie `RSLog` → `Blinko`, bundle id, prefissi `rs_`/`rslog_`) si fa in un
+(cartelle, librerie `Blinko` → `Blinko`, bundle id, prefissi `rs_`/`blinko_`) si fa in un
 colpo solo prima del push su GitHub.
 
 ## Setup di sviluppo
 
-- **Repo**: `rslog` (ombrello) referenzia `rslog-core`, `rslog-arduino`,
-  `rslog-zephyr`, `rslog-ios`, `rslog-android`; ogni componente ha `core/`
+- **Repo**: `blinko` (ombrello) referenzia `blinko-core`, `blinko-arduino`,
+  `blinko-zephyr`, `blinko-ios`, `blinko-android`; ogni componente ha `core/`
   come submodule. Ciclo: modifica in `core/`, commit, `make sync-core`,
   commit nei componenti. Su GitHub: creare i sei repo con questi nomi, poi
   `git push -u origin main` da ognuno e `git submodule sync`.

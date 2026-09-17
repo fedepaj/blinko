@@ -40,8 +40,8 @@ Con il LED quasi a contatto con l'obiettivo la luce inonda l'intero sensore.
 
 ```
 ┌──────────────── firmware (Nano R4) ────────────────┐   ┌──────────── iPhone ────────────┐
-│ app sketch                                          │   │ SwiftUI app "RSLog Viewer"      │
-│  └─ RSLog.log()/warn()/fatal()                      │   │  ├─ CameraController (AVFoundation)
+│ app sketch                                          │   │ SwiftUI app "Blinko Viewer"      │
+│  └─ Blinko.log()/warn()/fatal()                      │   │  ├─ CameraController (AVFoundation)
 │     └─ message store (carousel a priorità)          │   │  │   esposizione min, fuoco lock, │
 │        └─ rs_encoder (core C) → chip                │   │  │   fps, wide/ultrawide/front    │
 │           └─ GPT timer ISR → LED_BUILTIN + RGB      │ ~ │  ├─ FrameProcessor (Accelerate)  │
@@ -61,8 +61,8 @@ Scelte chiave:
 - **Core in C puro** (`core/`), senza dipendenze: lo stesso encoder gira sul
   Nano R4, lo stesso decoder gira su iOS (bridging header), su Android (NDK)
   e nei test Python (ctypes). Il porting cambia solo il guscio.
-- **Firmware come libreria Arduino** (`firmware/libraries/RSLog`): l'utente
-  aggiunge `RSLog.begin()` e chiama `RSLog.log(...)`. La trasmissione è su
+- **Firmware come libreria Arduino** (`firmware/libraries/Blinko`): l'utente
+  aggiunge `Blinko.begin()` e chiama `Blinko.log(...)`. La trasmissione è su
   interrupt di timer hardware (GPT), indipendente da `loop()` e da `delay()`.
 - **Modulazione OOK + Manchester**: autosincronizzante, DC-balanced, tollera
   esposizione automatica e soglie che derivano. Bit 1 = chip `01`, bit 0 = `10`.
@@ -84,7 +84,7 @@ Scelte chiave:
 |---|---|---|---|
 | 0 | Ricognizione ambiente | toolchain, device, pin map | fatto |
 | 1 | Core protocollo + simulatore | `core/`, `tools/simulate.py`, test | test Python: ≥95% pacchetti decodificati a SNR realistico, 0 falsi positivi CRC |
-| 2 | Firmware | libreria RSLog, sketch demo, sketch strobe di calibrazione | compila con arduino-cli, upload sul Nano R4 |
+| 2 | Firmware | libreria Blinko, sketch demo, sketch strobe di calibrazione | compila con arduino-cli, upload sul Nano R4 |
 | 3 | App iOS MVP | camera lock, profilo righe, decoder, console | build + install su iPhone; decodifica dal vivo |
 | 4 | Calibrazione e tuning | Lab mode, misura `t_row`, scelta `T_chip` | tabella parametri per iPhone 14 |
 | 5 | Robustezza brick | hard fault handler, EEPROM, reset cause, watchdog | provocare un fault e leggerlo dal telefono |
@@ -108,9 +108,9 @@ Scelte chiave:
 
 ```
 core/                 C portabile (proto, encoder, decoder)
-firmware/libraries/   libreria Arduino RSLog (include copia di core/)
-firmware/sketches/    rslog_demo, strobe_calib, fault_demo
-ios/RSLogViewer/      app SwiftUI (xcodegen)
+firmware/libraries/   libreria Arduino Blinko (include copia di core/)
+firmware/sketches/    blinko_demo, strobe_calib, fault_demo
+ios/Blinko/      app SwiftUI (xcodegen)
 tools/                simulatore, test, analisi immagini
 docs/                 PLAN, PROTOCOL, CALIBRATION
 Makefile              build/upload firmware, build/install app, test
@@ -135,6 +135,6 @@ Makefile              build/upload firmware, build/install app, test
 - RGB ✅ tre flussi con piloti di calibrazione; dal vivo su iPhone: modalità
   RGB agganciata (55 piloti, condizionamento 0.91), 70–78 pkt/s. Android via
   profili RGB derivati dai piani YUV (crominanza a mezza risoluzione).
-- Fase 6 ✅ port Zephyr come modulo portabile (counter/gpio/flash_map) (`zephyr-modules/rslog`, `CONFIG_RSLOG=y`):
+- Fase 6 ✅ port Zephyr come modulo portabile (counter/gpio/flash_map) (`zephyr-modules/blinko`, `CONFIG_BLINKO=y`):
   Nano 33 BLE Rev2 verificata dal vivo, red LED of death decodificato
   dall'iPhone (`docs/ZEPHYR.md`). Android: piano in `docs/ANDROID.md`.

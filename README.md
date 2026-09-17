@@ -19,11 +19,11 @@ incluso qui come submodule (`git submodule update --init --recursive`).
 
 | Submodule | Repo | Contenuto |
 |---|---|---|
-| `core/` | rslog-core | protocollo, encoder, decoder, ricevitore in C portabile + tool Python |
-| `arduino/` | rslog-arduino | libreria Arduino `RSLog` (Nano R4 / UNO R4) e sketch demo |
-| `zephyr-module/` | rslog-zephyr | modulo Zephyr `rslog` (`CONFIG_RSLOG=y`) e demo con shell USB |
-| `ios/` | rslog-ios | app iPhone (SwiftUI, AVFoundation) |
-| `android/` | rslog-android | app Android (Kotlin, Camera2, NDK) |
+| `core/` | blinko-core | protocollo, encoder, decoder, ricevitore in C portabile + tool Python |
+| `arduino/` | blinko-arduino | libreria Arduino `Blinko` (Nano R4 / UNO R4) e sketch demo |
+| `zephyr-module/` | blinko-zephyr | modulo Zephyr `blinko` (`CONFIG_BLINKO=y`) e demo con shell USB |
+| `ios/` | blinko-ios | app iPhone (SwiftUI, AVFoundation) |
+| `android/` | blinko-android | app Android (Kotlin, Camera2, NDK) |
 | `docs/` | — | piano, roadmap, calibrazione |
 | `assets/` | — | logo e icone |
 
@@ -38,7 +38,7 @@ make test                # simulatore + decoder + assembler
 make fw-upload           # firmware demo sul Nano R4 (porta auto)
 make ios-install         # app su iPhone (firma automatica, team in project.yml)
 make zephyr-flash        # demo Zephyr sulla Nano 33 BLE (touch 1200 baud automatico)
-make android             # APK Android in android/build/RSLog-android-debug.apk
+make android             # APK Android in android/build/Blinko-android-debug.apk
 ```
 
 Poi: apri la seriale a 115200 (`info ciao`, `warn x`, `fatal y`, `hf`,
@@ -55,12 +55,12 @@ dalla libreria.
 ## Uso nel proprio sketch
 
 ```cpp
-#include <RSLog.h>
+#include <Blinko.h>
 void setup() {
-  RSLog.begin();                      // 30 µs/chip, LED_BUILTIN + RGB
-  RSLog.info("boot ok");
-  RSLog.checkpoint("init-sensors");   // riportato se segue un reset da watchdog
-  if (!sensor.begin()) RSLog.fatal(3, "sensor init");   // non ritorna: lampeggia il motivo
+  Blinko.begin();                      // 30 µs/chip, LED_BUILTIN + RGB
+  Blinko.info("boot ok");
+  Blinko.checkpoint("init-sensors");   // riportato se segue un reset da watchdog
+  if (!sensor.begin()) Blinko.fatal(3, "sensor init");   // non ritorna: lampeggia il motivo
 }
-void loop() { RSLog.status("up=%lus", millis()/1000); }
+void loop() { Blinko.status("up=%lus", millis()/1000); }
 ```
