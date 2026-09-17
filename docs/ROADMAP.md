@@ -159,17 +159,38 @@ loop di morte dura 4 s e poi la scheda riparte annunciando il record persistito.
 
 ## Fase 5 — Firmware
 
-1. Temporizzazione a scadenza nel loop di fault (DWT su R4, `counter` su Zephyr).
-2. Backend di log Zephyr (`LOG_ERR()` → LED, `CONFIG_RSLOG_LOG_BACKEND`);
-   `RSLog.printf` per Arduino.
-3. ~~Board id~~ (fatto il 17/9) + versione nello STATUS; mini backtrace nel fault (2–3 LR).
-4. Port di prova: GIGA R1 (STM32H747, LED RGB, Zephyr in-tree) e UNO Q.
-5. Dimming PWM opzionale per canale.
+1. ~~Temporizzazione a scadenza nel loop di fault~~ (fatto il 16/9).
+2. ~~Backend di log Zephyr~~ (fatto il 17/9: `CONFIG_RSLOG_LOG_BACKEND`, livello massimo
+   inoltrato `CONFIG_RSLOG_LOG_BACKEND_LEVEL`, prefisso del modulo tolto, serve
+   `CONFIG_LOG_MODE_DEFERRED`; demo `rslog zlog wrn testo`). ~~`RSLog.printf`~~ (fatto:
+   `RSLogClass` è una `Print`, quindi `print/println/printf` → messaggi a `setPrintLevel`).
+3. ~~Board id~~ (fatto) + versione nello STATUS; ~~mini backtrace nel fault~~ (fatto: fino a
+   3 indirizzi di ritorno trovati sullo stack sopra il frame d'eccezione, log ERROR "bt …"
+   copiato nel loop di morte; con il peso 3 del FAULT arriva dopo il FAULT stesso).
+4. Port di prova: GIGA R1 (morta) e UNO Q (rimandato: richiede un setup diverso).
+5. Dimming PWM per canale: **valutato e rimandato**. Serve una portante ≥ 500 kHz perché
+   l'esposizione da 15 µs non veda il PWM (il PWM di `analogWrite` a 490 Hz batterebbe
+   con le righe); i pin LED delle Nano non stanno tutti su canali timer adatti, e il
+   ricevitore gestisce ormai bene la saturazione (pesi delle colonne, alone).
+
+Ricevitore, 17/9 sera: filtro anti-diafonia nel multi-sorgente (le strisce di un LED
+luminoso sfumano su tutta la larghezza del frame: un pacchetto identico nella stessa
+riga appartiene alla luce che occupa quelle righe; un pacchetto molto più debole che
+segue il carosello di un'altra traccia è la sua fuga) e consegna del messaggio con un
+solo CRC quando il sistema è risolto (entrambi restano necessari per il recupero
+leave-one-out). Messaggi del corpus 11 → 19, tutti corretti.
 
 ## Fase 6 — App
 
-Icona (fatta), registratore (fase 0), vista sorgenti (fase 4), storico
-persistente, condivisione delle registrazioni, Lab mode sul corpus.
+Icona (fatta), registratore (fase 0), vista sorgenti (fase 4). Da fare: storico
+persistente dei messaggi, esportazione/condivisione di log e registrazioni, filtro
+della console per sorgente, Lab mode sul corpus.
+
+## Nome
+
+Scelto il 17/9: **Blinko** (corto, pronunciabile, "lampeggia"). Il rinominare
+(cartelle, librerie `RSLog` → `Blinko`, bundle id, prefissi `rs_`/`rslog_`) si fa in un
+colpo solo prima del push su GitHub.
 
 ## Setup di sviluppo
 
