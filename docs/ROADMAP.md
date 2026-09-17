@@ -9,9 +9,10 @@ portabile, app iOS e Android, repository indipendenti.
 | Problema | Evidenza | Dove si risolve |
 |---|---|---|
 | ~~Loop di fault troppo lento (chip ~84 µs invece di 30 sul R4, ~40 sulla Nano 33)~~ **risolto il 16/9**: temporizzazione a scadenza (DWT sul R4, `counter` in polling su Zephyr); verificato dal vivo: 6.0 righe/chip, fault decodificato su entrambe | fit sui run del frame del LED rosso: 16 righe/chip, pacchetto da 1100 righe > macchia (450) | fatto |
-| Saturazione: il rosso del R4 satura a ISO minimo; i chip spenti si accorciano di un'esposizione (run ON 36 righe, OFF 6) | frame del fault, `peak=255 sat=0.19` | ricevitore: canale non saturo (il verde vede il rosso attenuato) + compensazione dello smear; firmware: opzione dimming PWM |
-| Movimento: falsi piloti corrompono la matrice colore (cond 0.9 → 0.05), ROI per frame | misura del 15/9 sera | fase 3 |
-| Pochi messaggi con 100 pkt/s | il demo manda solo STATUS ogni 5 s; i falsi positivi del CRC-8 (1/256 dei sync corrotti) avvelenano il sistema lineare e azzerano lo slot | fase 1 (CRC-16, soft decoding) + contatore di reset esposto nell'app |
+| Saturazione: il rosso del R4 satura a ISO minimo; i chip spenti si accorciano di un'esposizione (run ON 36 righe, OFF 6). **Mitigato il 17/9 nel ricevitore**: il nucleo saturo perde i gap da 1 chip ma l'alone intorno li conserva → i profili escludono le colonne che saturano in ≥ 2 righe (`rs_frame.c`, `RS_SAT_LEVEL`). Corpus: 132 → 315 pacchetti (ROI globale), 124 → 337 (multi); clip del fault R4 da 3.5 a ~20 pkt/s | frame del fault, `peak=255 sat=0.19`; replay del corpus | resta lato firmware: chip 45–60 µs o dimming PWM sulle schede molto luminose. Il decoder "a fronti" (`use_edges`) è stato provato e scartato: produceva pacchetti finti tutti a zero |
+| Movimento: falsi piloti corrompono la matrice colore (cond 0.9 → 0.05), ROI per frame. **Causa principale trovata il 17/9**: il blocco pilota con P=8 (432 righe) era più alto della macchia → aggancio RGB raro; ora `RS_PILOT_P=4`. Nel sintetico 2-D (`synth2d.py`) l'aggancio arriva al 95 % dei frame fino a 40 px/frame | misura del 15/9 sera; sweep sintetico | verifica dal vivo con nuove registrazioni (le registrazioni "Motion" del corpus sono con P=8 e non possono agganciare) |
+| Pochi messaggi con 100 pkt/s | il demo manda solo STATUS ogni 5 s; i falsi positivi del CRC-8 (1/256 dei sync corrotti) avvelenano il sistema lineare e azzerano lo slot. **Recupero fatto il 17/9** (fase 1.2/1.4 senza allungare il pacchetto): anello delle righe grezze, re-soluzione leave-one-out al fallimento del CRC del messaggio, due "strike" su META/CRC | test di corruzione: 55 messaggi recuperati, reset 488 → 97, 0 pacchetti errati | contatore di reset già esposto (`rs_rx_resets`) |
+| Tracce fantasma ai bordi quando il LED è spento (rumore di colonna allungato dal filtro verticale) | replay multi del corpus: 4 tracce su una scheda sola | **risolto il 17/9**: la segmentazione scarta componenti larghe 1 cella e macchie sotto 48 / min+40 |
 
 ## Fase 0 — Strumenti (prima di tutto)
 
@@ -28,6 +29,10 @@ portabile, app iOS e Android, repository indipendenti.
    `hf`, `rgb`, `burst`, `chip`, `stat`) usata dai test end-to-end.
 
 ## Fase 1 — Robustezza del pacchetto
+
+Stato 17/9: fatti i punti 2 (variante "leave-one-out" nell'assembler invece del chase
+sui bit) e 4 (`rs_rx_resets`); il punto 1 (CRC-16) è stato scartato per non allungare
+i pacchetti; il punto 3 è sostituito dall'esclusione delle colonne sature.
 
 1. **CRC-16** sul pacchetto (67 → 75 chip, +12 %): con la codifica fountain
    ogni falso positivo costa un messaggio intero.
@@ -68,6 +73,10 @@ tra frame.
    lento della mano.
 
 ## Fase 4 — Multi-sorgente
+
+Stato 17/9: punti 1, 2 e 5 fatti (`rs_frame_segment_rgb`, `rs_multi`, marker
+nell'anteprima iOS e Android, tag `src #n` in console; `replay.py --multi` per il
+corpus). Restano 3 (fusione di macchie che trasmettono lo stesso pacchetto) e 4.
 
 1. Segmentazione della thumbnail in macchie (componenti connesse) e tracking
    multi-oggetto con ID stabili.
