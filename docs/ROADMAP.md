@@ -48,6 +48,14 @@ i pacchetti; il punto 3 è sostituito dall'esclusione delle colonne sature.
 
 ## Fase 2 — Sincronizzazione (modello temporale nel ricevitore)
 
+Stato 17/9: primo passo fatto, "ipotesi di timing" nel decoder: il sync da 8 chip
+fissa la lunghezza del chip al ~2 %, cioè 1.4 chip di deriva a fine pacchetto
+quando il PLL perde i fronti; un pacchetto che fallisce il CRC viene riprovato con
+l'orologio del ricevitore (media su molti pacchetti e frame) e con il sync ±3 %,
+accettato solo con confidenza doppia. Corpus 814 → 1601 pacchetti, 0 falsi nel
+sintetico. Prossimo: predizione della fase dei pacchetti tra frame consecutivi.
+
+
 Oggi ogni frame ricomincia da zero. Il periodo del chip (in righe), la fase e
 il periodo del pacchetto (67 chip) sono stabili: un tracker li stima dai sync
 validati e **predice dove cadranno i sync nel frame successivo** (lo
@@ -75,6 +83,18 @@ tra frame.
    lento della mano.
 
 ## Fase 4 — Multi-sorgente
+
+Stato 17/9 pomeriggio: il profilo per traccia include l'alone (righe ±1 altezza,
+colonne ±½ larghezza, ritagliato contro le tracce vicine); le colonne sono pesate
+con l'energia delle differenze riga-riga (filtro passa-alto adattato alle strisce,
+gradini verso la saturazione ignorati); si costruiscono due varianti (con e senza le
+colonne saturate) e per ogni frame vince quella da cui il decoder tira fuori più
+pacchetti. Corpus multi 1816 → 2349 pacchetti contro 1601 del ROI globale, 8 messaggi
+corretti; il multi è ora la scelta giusta di default nell'app. Il confronto tra
+varianti si fa ogni 8 frame (o dopo un frame vuoto) perché per-frame portava
+l'iPhone a 40 fps; pesi calcolati ogni 4 righe e media solo sulle colonne pesate.
+Le tracce che non hanno mai decodificato compaiono solo dopo 12 frame (riflessi
+e puntini ai bordi non lampeggiano più come marker).
 
 Stato 17/9: punti 1, 2 e 5 fatti (`rs_frame_segment_rgb`, `rs_multi`, marker
 nell'anteprima iOS e Android, tag `src #n` in console; `replay.py --multi` per il
