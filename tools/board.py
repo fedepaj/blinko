@@ -31,9 +31,15 @@ def usb_ports():
     return found
 
 
+_cache = {}
+
+
 def port_for(board):
+    """Cached: ioreg takes ~1 s, so the lookup is repeated only when the cached port is gone."""
+    p = _cache.get(board)
+    if p and p in glob.glob("/dev/cu.usbmodem*"): return p
     for p, n in usb_ports().items():
-        if any(n.startswith(x) for x in NAMES[board]): return p
+        if any(n.startswith(x) for x in NAMES[board]): _cache[board] = p; return p
     raise SystemExit(f"{board}: board not found (ports: {usb_ports()})")
 
 

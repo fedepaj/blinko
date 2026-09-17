@@ -126,6 +126,14 @@ La modalità registrazione manuale (tasto Record) è in Impostazioni > Debug,
 spenta di default; `record` remoto funziona sempre e di default cancella il
 file dal telefono dopo il trasferimento.
 
+## Fase 4c — Fault pesato (fatto il 17/9)
+
+Carosello con `rs_tx_set_fault_weight` (peso 3 di default nei loop di morte: 85 % dei
+pacchetti al FAULT). Misurato dal vivo sul R4 via sessione remota (`hf` da seriale,
+messaggio sul telefono): **FAULT completo dopo 1.3–1.5 s** dal guasto, STATUS a ~4 s,
+INFO a ~6 s. Nota: il comando `hf` della demo arma un watchdog da 4 s, quindi il
+loop di morte dura 4 s e poi la scheda riparte annunciando il record persistito.
+
 ## Fase 5 — Firmware
 
 1. Temporizzazione a scadenza nel loop di fault (DWT su R4, `counter` su Zephyr).
