@@ -53,7 +53,18 @@ fissa la lunghezza del chip al ~2 %, cioè 1.4 chip di deriva a fine pacchetto
 quando il PLL perde i fronti; un pacchetto che fallisce il CRC viene riprovato con
 l'orologio del ricevitore (media su molti pacchetti e frame) e con il sync ±3 %,
 accettato solo con confidenza doppia. Corpus 814 → 1601 pacchetti, 0 falsi nel
-sintetico. Prossimo: predizione della fase dei pacchetti tra frame consecutivi.
+sintetico.
+
+Secondo passo (17/9 pomeriggio): `rs_decode_at` decodifica un pacchetto a una
+posizione nota senza cercare il sync, e il ricevitore prova le posizioni sulla
+griglia (±67 chip) accanto a ogni pacchetto decodificato. Guadagno modesto sul
+corpus (2120 → 2153) perché, misurato con `tools/loss_budget.py` sul simulatore
+con verità nota, il decoder prende già il 100 % dei pacchetti disponibili nei
+casi puliti e la predizione paga solo con saturazione pesante (sync distrutto,
+bit vivi). Le perdite reali sono pacchetti tagliati dal bordo del frame e bit
+danneggiati: la predizione della fase tra frame non le recupera, quindi il
+modello temporale si ferma qui. Per aumentare i pacchetti per frame la leva è
+il protocollo (chip più corti o pacchetti più corti), non il ricevitore.
 
 
 Oggi ogni frame ricomincia da zero. Il periodo del chip (in righe), la fase e
