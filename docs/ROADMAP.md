@@ -182,9 +182,13 @@ leave-one-out). Messaggi del corpus 11 → 19, tutti corretti.
 
 ## Fase 6 — App
 
-Icona (fatta), registratore (fase 0), vista sorgenti (fase 4). Da fare: storico
-persistente dei messaggi, esportazione/condivisione di log e registrazioni, filtro
-della console per sorgente, Lab mode sul corpus.
+Icona (fatta), registratore (fase 0), vista sorgenti (fase 4). Fatti il 17/9 sera:
+storico persistente (Documents/history.json, ultimi 2000 messaggi), filtro della
+console per sorgente (id gruppo + id scheda), condivisione del log (già c'era) e
+delle registrazioni (Impostazioni › Debug › Recordings, share sheet e cancellazione),
+Lab mode: replay di una registrazione dentro l'app con lo stesso ricevitore
+(`ReplayEngine`, comando remoto `replay NAME`; 240 frame in 1 s sull'iPhone).
+Android: da allineare (filtro, storico) dopo la prova sul dispositivo.
 
 ## Nome
 
