@@ -1,4 +1,4 @@
-<img src="assets/logo/icon-1024.png" alt="Blinko" width="110" align="right">
+<img src="assets/logo/icon-rounded.png" alt="Blinko" width="110" align="right">
 
 # Blinko
 
