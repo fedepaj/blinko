@@ -29,9 +29,9 @@ test:
 test-full:
 	$(PY) core/tools/test_core.py
 fw:
-	arduino/build.sh blinko_demo
+	arduino/build.sh BlinkoDemo
 fw-upload:
-	arduino/build.sh blinko_demo upload
+	arduino/build.sh BlinkoDemo upload
 zephyr:
 	$(ZEPHYR_ENV) .venv/bin/west build -b arduino_nano_33_ble -d zephyr-module/build zephyr-module/samples/blinko_demo
 zephyr-flash: zephyr
