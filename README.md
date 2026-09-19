@@ -1,3 +1,5 @@
+<img src="assets/logo/icon-1024.png" alt="Blinko" width="110" align="right">
+
 # Blinko
 
 **Read a microcontroller's logs with a phone camera, through its LEDs.**
@@ -12,8 +14,6 @@ watchdog reset ends in a handler that needs no interrupts, no kernel and no
 drivers: it blinks the reason on the red LED until you press reset, and writes
 it to flash so the next boot can repeat it. A board that cannot talk on serial
 any more can still tell you *why* it stopped.
-
-<!-- assets/logo/icon-1024.png -->
 
 ## How it works
 

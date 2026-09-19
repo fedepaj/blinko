@@ -10,3 +10,4 @@ Gemini_Generated_Image_*.jpeg
 testdata/
 .claude/
 graphify-out/
+CLAUDE.md
