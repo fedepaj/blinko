@@ -2,6 +2,7 @@
 """Send a command to a board's serial shell and print the reply.
 
   board.py r4  info            Nano R4 demo sketch (info warn err debug status fatal hf hang clear chip rgb burst strobe led stat)
+  board.py r4a stat / r4b stat two identical boards, by port order; r4@21301 by port suffix
   board.py n33 "blinko stat"    Nano 33 BLE Zephyr shell
   board.py list                ports and which board is on each
 
@@ -35,11 +36,19 @@ _cache = {}
 
 
 def port_for(board):
-    """Cached: ioreg takes ~1 s, so the lookup is repeated only when the cached port is gone."""
+    """Cached: ioreg takes ~1 s, so the lookup is repeated only when the cached port is gone.
+    Several identical boards: `r4a`, `r4b`, ... pick the 1st, 2nd, ... by port name; `r4@21301` picks
+    the port /dev/cu.usbmodem21301; `/dev/cu.usbmodemXXXX` is used as is."""
+    if board.startswith("/dev/"): return board
     p = _cache.get(board)
     if p and p in glob.glob("/dev/cu.usbmodem*"): return p
-    for p, n in usb_ports().items():
-        if any(n.startswith(x) for x in NAMES[board]): _cache[board] = p; return p
+    kind, _, sel = board.partition("@")
+    idx = 0
+    if not sel and kind[-1] in "abcd" and kind[:-1] in NAMES: idx = "abcd".index(kind[-1]); kind = kind[:-1]
+    if kind not in NAMES: raise SystemExit(f"{board}: unknown board (known: {', '.join(NAMES)})")
+    ports = sorted(p for p, n in usb_ports().items() if any(n.startswith(x) for x in NAMES[kind]))
+    if sel: ports = [p for p in ports if p.endswith(sel)]
+    if idx < len(ports): _cache[board] = ports[idx]; return ports[idx]
     raise SystemExit(f"{board}: board not found (ports: {usb_ports()})")
 
 

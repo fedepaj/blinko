@@ -28,19 +28,26 @@ method from Joan Charmant's article.
 The *Camera* section below shows what the capture is actually doing: format,
 frame rate, exposure and its minimum, ISO, lens position and the ROI used.
 
-## Choosing `T_chip`
+## Choosing T
 
-- you need `T_chip >= 4 · t_row` (at least 4 scan lines per chip);
-- the exposure must be `<= T_chip` (better `<= T_chip/2`);
-- a packet is 67 chips (`RS_PKT_CHIPS`, protocol v2), so it is
-  `67 · T_chip / t_row` scan lines tall: this must stay **below the height of
-  the blob**, otherwise no packet ever fits whole in one frame.
+The board is configured by **T**, the shortest run of the line code (the
+timer runs at T/3, one chip). Rules:
 
-Example: `t_row = 10 µs`, a blob 700 rows tall. `T_chip = 100 µs` gives packets
-670 rows tall — it technically fits but almost never lands entirely inside the
-blob (~0.04 complete packets per frame). `T_chip = 60 µs` gives 402 rows, so
-about 0.7 packets per frame. In the firmware: `chip 60` over the serial port,
-or `cfg.chip_us = 60` (the library clamps `chip_us` to a minimum of 15 µs).
+- the camera exposure should be `<= T`; the receiver still decodes up to
+  about `2 T` with a growing penalty and gives up beyond `3 T`;
+- a chip (`T/3`) should be at least ~1.5 rows, better 3 or more;
+- a packet is 82 chips (`RS_PKT_CHIPS`), i.e. `82 · T / (3 · t_row)` rows
+  tall. If this is taller than the blob, switch on **repetition** (`rep 2` or
+  `rep 3` on the demo, `cfg.repeat`): the receiver reads one packet across
+  two copies, and from any sync it also reads the packet before it, so a blob
+  about one packet long still yields a packet per frame.
+
+Examples. iPhone 14 (`t_row` 5.1 µs, exposure 15 µs, blob 500–600 rows): T =
+45–60 µs, packets 400–530 rows, ~100 packets/s. Samsung S21 FE in RAW capture
+(`t_row` 2.65 µs, exposure 57.5 µs, blob ~1600 rows of 3000): T = 90–120 µs
+(exposure 0.5–0.65 T), packets 920–1230 rows, so `rep 2–3`; 15–26 packets/s
+at 30 fps. In the firmware: `chip 90` and `rep 2` over the serial port, or
+`cfg.chip_us = 90; cfg.repeat = 2` (the library clamps `chip_us` to ≥ 24 µs).
 
 ## Checking the data signal
 
@@ -90,10 +97,10 @@ Still, it is better not to saturate in the first place:
 | Quantity | Value |
 |---|---|
 | minimum exposure | **19 µs** at 60 fps (**15 µs** at 120 fps), ISO min 34 |
-| row time `t_row` | **5.1 µs** (30 µs/chip → 5.9 rows/chip) |
+| row time `t_row` | **5.1 µs** (T = 60 µs → 3.9 rows per chip) |
 | frame readout | ≈ 5.5 ms out of a 16.7 ms frame period (33 % coverage) |
 | scan axis | rows of the native buffer (horizontal bands in landscape) |
-| chosen `T_chip` | **30 µs** (exposure = 0.63 chip; 16.6 kbit/s gross) |
+| chosen T | **45–60 µs** (exposure 0.25–0.33 T; 25–33 kbit/s gross per channel) |
 | packet height | 67 × 5.9 ≈ 395 rows |
 | decoded packets | 33–38 pkt/s with the board at ~5 cm (blob ≈ 170 rows + halo); 50–120 pkt/s with the current receiver |
 | chip in the bit-bang fault loop | ≈ 38 µs (7.6 rows/chip): the receiver adapts by itself |
@@ -101,3 +108,16 @@ Still, it is better not to saturate in the first place:
 With `T_chip = 100 µs` (the initial value) a packet would be ≈ 1300 rows tall,
 more than the whole frame: nothing decodable. Calibration is therefore
 essential for every new camera.
+
+## Measured results (2026-10-01, Samsung S21 FE, back wide camera, Camera2)
+
+| Quantity | Value |
+|---|---|
+| shortest exposure | **57.5 µs** (the camera reports it; the edges in the data show about 60–100 µs) |
+| row time | 1080p **5.44 µs**, 4K 3.22 µs, RAW 4000×3000 **2.65 µs** (the strobe gave 2.83; the decoded packets' clock, which is what matters, gives 2.65) |
+| frame readout | 1080p 6.0 ms, 4K 7.0 ms, RAW ~8 ms, of a 33 ms frame at 30 fps |
+| capture | RAW_SENSOR (Bayer, black 64, white 1023): the YUV path hides saturation behind the ISP's highlight compression |
+| chosen T / repeat | **90–120 µs, rep 2–3** → 15–26 packets/s |
+
+The row time differs per resolution, so the Android app keeps one per
+resolution (Settings, filled by the strobe calibration; defaults are these).

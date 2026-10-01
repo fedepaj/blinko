@@ -31,22 +31,26 @@ Blinko puts a small packet in those stripes:
  │ Blinko.info("boot ok") │              │ camera, shortest exposure    │
  │   └ message slots      │   blinking   │   └ rows → brightness profile│
  │     └ fountain coding  │ ~~~~~~~~~~>  │     └ sync → chip clock      │
- │       └ Manchester     │    light     │       └ bits → packets (CRC) │
+ │       └ RLL(2,7) code  │    light     │       └ fit → packets (CRC)  │
  │         └ timer → LEDs │              │         └ packets → message  │
  └────────────────────────┘              └──────────────────────────────┘
 ```
 
-Each packet is 67 chips (2 ms at the default 30 µs per chip) and carries one
-byte of the message. Packets are **fountain-coded**: the receiver rebuilds a
+Each packet is 82 chips (3.3 ms at the default timing, T = 60 µs) and carries
+one byte of the message. The receiver does not threshold the stripes: it fits
+chip templates that include the camera's exposure smear, so it keeps working
+with exposures up to two or three times longer than the ideal. Packets are **fountain-coded**: the receiver rebuilds a
 message from *any* sufficient subset of packets, so it does not matter which
 ones a given frame happened to catch, and there is no retransmission protocol
 to run in a fault handler. A colour LED sends three independent streams at
 once, one per die, and the receiver separates them by measuring the camera's
 colour response from pilot blocks the transmitter inserts periodically.
 
-Measured on an iPhone 14 at 120 fps with a board a few centimetres away:
-**50 to 120 packets per second**, a 20-character message in well under a
-second, and the reason for a crash delivered about 1.5 s after the crash.
+Measured with a board a few centimetres away: an iPhone 14 at 120 fps decodes
+**about 100 packets per second** (T = 45–60 µs), a 20-character message in
+well under a second, and the reason for a crash about 1.5 s after the crash; a
+Samsung S21 FE at 30 fps in RAW capture decodes 15–26 packets per second with
+T = 90–120 µs and each packet sent twice or three times.
 
 The idea of measuring a rolling shutter with a blinking LED comes from Joan
 Charmant's article
@@ -59,7 +63,7 @@ Charmant's article
   and any board supported by **Zephyr** with `led0` and a `counter` device
   through the Zephyr module. Both are tested on the Nano R4 and the Nano 33 BLE.
 - A phone: **iOS 17+** or **Android 8+**. The camera must allow a manual
-  exposure of roughly 30 µs or shorter, which most phones do.
+  exposure of 60 µs or shorter, which most phones do; the shorter the better.
 - Nothing else. A colour LED triples the throughput but is not required.
 
 ## Quick start
@@ -92,7 +96,7 @@ Arduino:
 #include <Blinko.h>
 
 void setup() {
-  Blinko.begin();                       // 30 µs chips, RGB + built-in LED
+  Blinko.begin();                       // T = 60 µs, RGB + built-in LED
   Blinko.info("boot ok fw=%s", VERSION);
   Blinko.checkpoint("init-sensors");    // reported if a watchdog reset follows
   if (!sensor.begin()) Blinko.fatal(3, "sensor init");   // never returns: blinks the reason
@@ -165,12 +169,19 @@ the submodule pointer in each component.
 
 ## Limits worth knowing
 
-- **Distance.** A packet is about 400 rows tall at the default settings, so the
-  defocused LED must cover at least that much of the frame: roughly 10 cm with
-  a phone's main camera, less with a wide-angle lens. Further away, nothing
-  decodes. Longer chips trade throughput for distance.
-- **Exposure.** The exposure must be shorter than a chip or the stripes blur
-  away. Phones that cannot go below about 30 µs need a longer chip.
+- **Distance.** A packet is about 1000 rows tall at the default settings on a
+  5 µs-row sensor, so the defocused LED must cover a good part of the frame:
+  a few centimetres with a phone's main camera. Further away, nothing decodes.
+  A shorter T trades exposure margin for distance; sending each packet twice
+  (`rep 2`) lets the receiver read a packet across two copies when the blob
+  is shorter than one.
+- **Exposure.** The exposure should stay below T (the shortest run of the
+  code); the receiver tolerates up to about 2 T at a cost. Phones that cannot
+  go below 60 µs need a longer T on the board.
+- **Android.** Camera2 sessions run at 30 fps, so a phone sees only its readout
+  time (6–8 ms) out of every 33 ms; the Android app offers RAW capture, which
+  avoids the ISP's highlight compression, and the receiver's packet repetition
+  and sync-free framing are what make 30 fps phones work.
 - **Very bright LEDs** saturate the sensor and lose the short gaps in their
   core; the receiver recovers them from the halo around the blob, but moving
   back a little, or a longer chip, is the better fix.

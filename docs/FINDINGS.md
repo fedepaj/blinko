@@ -21,16 +21,59 @@ Two consequences. First, the readout covers only a third of a 60 fps frame
 period: between two readouts there is a gap of several milliseconds, about 90
 chips, in which everything transmitted is lost. Nothing in the receiver can
 recover it, which is why packets are short, self-contained and repeated rather
-than being part of a stream. Second, a chip of 30 µs is about 6 rows, and a
-67-chip packet about 400 rows: the defocused LED must cover at least that many
-rows of the frame or no packet ever fits in one frame. This is the real limit
-on distance, not brightness. At 30 cm the blob is around 60 rows and nothing
-decodes, whatever the exposure.
+than being part of a stream. Second, at T = 60 µs a chip is about 4 rows and
+an 82-chip packet about 320 rows: the defocused LED must cover at least that
+many rows of the frame, or the packet must be sent twice so that the receiver
+can read it across two copies. This is the real limit on distance, not
+brightness. At 30 cm the blob is around 60 rows and nothing decodes, whatever
+the exposure.
 
-**Exposure must be shorter than a chip.** The row integrates over the exposure
-window, so an exposure of one chip halves the contrast of the stripes and an
-exposure of two erases them. Phones that cannot go below 30 µs need a longer
-chip on the board.
+**Exposure is a box filter.** A row integrates the LED over the exposure E, so
+a step becomes a ramp E rows long and a run of length T keeps
+`sinc(πE/2T)` of its amplitude: 64 % at E = T, 30 % at 1.5 T, nothing at 2 T.
+A decoder that thresholds the profile stops around E = T; the template-fitting
+receiver, which models the smear, decodes real data up to E ≈ 2 T and is cut
+off at 3 T, where every run is attenuated and the templates go flat. Phones
+whose shortest exposure is long (57 µs on the Samsung S21 FE) need T ≥ 90 µs.
+
+## A second camera: the Samsung S21 FE
+
+The first Android phone (Camera2, Android 16) differs from the iPhone in
+every number that matters.
+
+| Quantity | iPhone 14 | Samsung S21 FE |
+|---|---|---|
+| shortest exposure | 15 µs | 57.5 µs |
+| frame rate with manual exposure | 120 fps | 30 fps (the high-speed sessions refuse manual exposure) |
+| readout per frame | 5.5 ms of 8.3 | 6–8 ms of 33 |
+| row time | 5.1 µs | 5.44 µs at 1080p, 3.22 at 4K, 2.65 in RAW 4000×3000 |
+| time the LED blob covers | ~2.8 ms | 1.3–1.9 ms at a few cm, 4.5 ms at 1 cm |
+
+Consequences, all measured:
+
+- **Exposure 57.5 µs** is two Manchester chips of the earlier protocol and
+  erased it entirely; with T = 90–120 µs it is 0.5–0.65 T and decodes.
+- **A packet longer than the blob** (3.3 ms at T = 60 µs against a 1.3–1.9 ms
+  window) never fits whole. Packet repetition plus the receiver's cyclic and
+  backward decoding is what makes the phone work; T alone does not.
+- **The ISP hides saturation.** In YUV the luma tops out around 238 with
+  highlights compressed, so clipped stripes look like modulation with the gaps
+  gone. RAW capture (`RAW_SENSOR`, black 64, white 1023) shows the clipping and
+  lets the receiver drop clipped Bayer blocks and keep the halo.
+- **Gr and Gb pixels differ in sensitivity** under a narrow-band LED (a
+  period-2 zigzag in the green profile); the green profile uses the Gr rows
+  only.
+- **The strobe calibration can be off by 7 %** on this sensor (2.83 vs 2.65 µs
+  per row in RAW); the clock the decoded packets report is the truth, and it is
+  what the exposure-in-rows setting should be derived from.
+- **CPU.** Three 3000-row profiles per frame cost 15–25 ms on the phone's big
+  cores, which the governor keeps at 0.7–0.85 GHz under this load: frame rates
+  swing between 10 and 29 fps. Averaging the RAW rows in pairs before the
+  receiver halves the cost without loss (the signal needs no more than ~4 rows
+  per chip).
+
+Final figures at 1 cm: 0 packets/s with the earlier protocol and 15–26 with
+T = 90–120 µs and each packet sent two or three times.
 
 ## Bright LEDs destroy their own signal, and the halo saves it
 
@@ -130,29 +173,42 @@ lines still follow a few seconds later, which is usually the context you want.
 
 ## Small receiver lessons
 
-- **A CRC-8 per packet is not enough on its own.** One corrupted sync in 256
-  passes the packet CRC, and a single bad row poisons a fountain system for
-  good. The assembler keeps the raw rows and, when the message CRC fails,
-  re-solves leaving one row out at a time until the message checks out. In a
-  corruption test that recovered 55 messages and took slot resets from 488 down
-  to 97, with no wrong message delivered.
+- **A per-packet CRC is not enough on its own.** A corrupted packet that
+  passes its CRC poisons a fountain system for good. The assembler keeps the
+  raw rows and, when the message CRC fails, re-solves leaving one row out at a
+  time until the message checks out. In a corruption test that recovered 55
+  messages and took slot resets from 488 down to 97, with no wrong message
+  delivered. The packet CRC is 12 bits with a non-zero init: a receiver that
+  tries many hypotheses per frame makes about one completed trial in 4096 a
+  false accept, and the init guarantees an all-dark or all-bright stretch (a
+  blob edge) never decodes to a valid packet.
 - **Do not require both message CRCs to deliver.** A directly solved system is
   safe with one of them; requiring both meant that a pulsed fault LED, which
   rarely shows every control packet in a short window, often never delivered.
   Both are still required for the leave-one-out recovery, where many trials
-  would make a single CRC-8 unsafe. Messages assembled from the corpus went
+  would make a single CRC unsafe. Messages assembled from the corpus went
   from 11 to 19, all of them correct.
-- **Knowing the timing helps less than expected.** The 8-chip sync fixes the
-  chip length to about 2 %, which is 1.4 chips of drift by the end of a packet,
-  so retrying a failed packet with the receiver's own chip clock and with the
-  sync estimate stretched by ±3 % is worth a lot: corpus 814 → 1601 packets.
-  Going further and decoding at predicted positions without a sync at all
-  bought only another 1.5 %. A loss budget against ground truth in the
-  simulator explains why: in clean conditions the decoder already gets 100 % of
-  the packets that fit in the frame, and phase prediction only pays where
-  saturation has destroyed the sync while leaving the bits alive. What is lost
-  in practice is packets cut by the edge of the frame and packets whose bits
-  are genuinely damaged, and neither is recoverable by better timing.
+- **The clock comes from the sync's two edges, not from a correlation.** Two
+  0.5-crossings 10 chips apart give the chip length to about 1 % even with
+  smeared edges; a template correlation on a clock grid is several percent off,
+  and at 15 rows per chip a few percent is more than a ±1-row timing slip per
+  codeword can absorb. The detector therefore measures the ON run first and
+  lets a small clock PLL in the Viterbi take the rest.
+- **What is lost is packets cut by the blob, and framing recovers them.** A
+  loss budget against ground truth showed that in clean conditions the decoder
+  gets every packet that fits in the blob; what it misses are packets cut by
+  the blob's edges. Reading the packet *before* each sync (its data field ends
+  at the gap, the sync gives it clock and phase) and, with repeated packets,
+  the tail of a cut packet from its previous copy brought the simulator from
+  3549 to 5346 packets over a sweep of phone-like conditions, and the Samsung
+  from 0 to 15–26 packets/s.
+- **A flexible detector invents aliases.** With per-codeword timing slips the
+  Viterbi can fit the stream at 2/3 of its clock (half-chip runs rounded
+  alternately up and down), and that alias can pass the CRC — always the same
+  packet, so it recurs. The cures are structural, not statistical: a candidate
+  must have a 10-chip ON run with two edges, modulated signal within 5 chips
+  before its gap (the filler guarantees it), an exposure under 3 chips, and a
+  decoded packet must re-fit on a rigid grid.
 
 ## Tooling lessons
 
