@@ -18,8 +18,8 @@ from rslive import RSLive
 import board as boardtool
 
 PHONES = {
-    "iphone":  dict(port=7777, board="r4@1301", row_us=5.1),
-    "samsung": dict(port=7778, board="r4@1401", row_us=2.65),
+    "iphone":  dict(port=7777, board="r4:360B17", row_us=5.1),     # boards by USB serial: port names swap when a board reboots
+    "samsung": dict(port=7778, board="r4:360D19", row_us=2.65),
 }
 PY = os.path.join(ROOT, ".venv", "bin", "python")
 

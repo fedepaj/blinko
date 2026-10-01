@@ -14,22 +14,33 @@ import glob, re, subprocess, sys, time
 NAMES = {"r4": ("Nano R4",), "n33": ("Blinko Nano33BLE", "RSLog Nano33BLE", "Arduino Nano 33 BLE")}
 
 
-def usb_ports():
-    """{port: product name} using the USB location id, as macOS names cu.usbmodem<location><1>."""
+def usb_devices():
+    """[(port, product name, usb serial)] from ioreg. Each device prints its properties in one
+    block; the product name, the serial and the location id come in no fixed order, so a block
+    is closed when its location id has been seen. macOS names the port cu.usbmodem<location><1>,
+    and that name changes when a board re-enumerates (reboot, hub change): the serial does not."""
     out = subprocess.run(["ioreg", "-p", "IOUSB", "-l", "-w0"], capture_output=True, text=True).stdout
-    found = {}
-    name = None
+    found = []
+    cur = {}
     for line in out.splitlines():
+        if re.match(r"\s*[|+-]*-o ", line): cur = {}                     # a new device node
         m = re.search(r'"USB Product Name" = "([^"]+)"', line)
-        if m: name = m.group(1); continue
+        if m: cur["name"] = m.group(1)
+        m = re.search(r'"USB Serial Number" = "([^"]+)"', line)
+        if m: cur["serial"] = m.group(1)
         m = re.search(r'"locationID" = (\d+)', line)
-        if m and name:
-            loc = int(m.group(1))
-            prefix = f"/dev/cu.usbmodem{loc >> 16:x}"
+        if m: cur["loc"] = int(m.group(1))
+        if "name" in cur and "loc" in cur and ("serial" in cur or "nameless" in cur):
+            prefix = f"/dev/cu.usbmodem{cur['loc'] >> 16:x}"
             for p in glob.glob("/dev/cu.usbmodem*"):
-                if p.lower().startswith(prefix.lower()): found[p] = name
-            name = None
+                if p.lower().startswith(prefix.lower()): found.append((p, cur["name"], cur.get("serial", "")))
+            cur = {}
     return found
+
+
+def usb_ports():
+    """{port: product name}."""
+    return {p: n for p, n, s in usb_devices()}
 
 
 _cache = {}
@@ -42,6 +53,11 @@ def port_for(board):
     if board.startswith("/dev/"): return board
     p = _cache.get(board)
     if p and p in glob.glob("/dev/cu.usbmodem*"): return p
+    if ":" in board and not board.startswith("/dev/"):                      # r4:<usb serial, or a unique part of it>
+        kind, _, ser = board.partition(":")
+        ports = [p for p, n, srl in usb_devices() if any(n.startswith(x) for x in NAMES.get(kind, ())) and ser.lower() in srl.lower()]
+        if len(ports) != 1: raise SystemExit(f"{board}: {len(ports)} boards match serial {ser!r}: {[(p, srl) for p, n, srl in usb_devices()]}")
+        _cache[board] = ports[0]; return ports[0]
     kind, _, sel = board.partition("@")
     idx = 0
     if not sel and kind[-1] in "abcd" and kind[:-1] in NAMES: idx = "abcd".index(kind[-1]); kind = kind[:-1]
