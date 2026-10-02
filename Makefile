@@ -1,14 +1,18 @@
 # blinko — umbrella repository. Each component is an independent git repo (submodule).
 PY := $(CURDIR)/.venv/bin/python
 ZEPHYR_ENV := ZEPHYR_TOOLCHAIN_VARIANT=zephyr ZEPHYR_SDK_INSTALL_DIR=$(CURDIR)/toolchain/zephyr-sdk-1.0.1
-.PHONY: help setup sync-core test test-full fw fw-upload zephyr zephyr-flash ios ios-install usb-forward live android android-install android-forward live-android status
+.PHONY: help setup sync-core test test-full fw fw-upload zephyr zephyr-flash ios ios-install usb-forward live android android-install android-forward live-android unoq-headless status
 
 help:
 	@echo "make setup        init submodules, python venv"
 	@echo "make sync-core    point every component's core/ submodule at the root core/ HEAD"
-	@echo "make test         core tests (simulator)"
-	@echo "make fw-upload    Arduino demo on the Nano R4 (PORT=... with two boards; tools/board.py r4a|r4b to drive them)"
+	@echo "make test         core tests (simulator), quick set"
+	@echo "make test-full    core tests, complete set"
+	@echo "make fw           build the Arduino demo for the Nano R4"
+	@echo "make fw-upload    Arduino demo on the Nano R4 (PORT=... with two boards; tools/board.py r4a|r4b|r4:<usb serial> to drive them, tools/board.py list for the serials)"
+	@echo "make zephyr       build the Zephyr demo for the Nano 33 BLE"
 	@echo "make zephyr-flash Zephyr demo on the Nano 33 BLE"
+	@echo "make ios          build the iOS app"
 	@echo "make ios-install  iOS app on the paired iPhone"
 	@echo "make usb-forward  USB tunnel to the app's remote session (port 7777)"
 	@echo "make live ARGS=.. drive the app: get | stats | watch | set K V | frame out.png | record --seconds 2 --note X --out DIR"
@@ -16,16 +20,18 @@ help:
 	@echo "make android-install  build, install and launch on the adb device"
 	@echo "make android-forward  USB tunnel to the Android app's remote session (local port 7778)"
 	@echo "make live-android ARGS=..  same as live, against the Android app"
+	@echo "make unoq-headless REC=x.rsrec  UNO Q kiosk on a recording, on this computer"
 	@echo "make status       git status of every repo"
 
+# pip runs at every setup, not only for a new venv: one made from a shorter list gets the missing
+# packages (lz4: compressed recordings in core/tools/rsrec.py; pymobiledevice3: make usb-forward)
 setup:
 	git submodule update --init --recursive
-	test -d .venv || (python3 -m venv .venv && .venv/bin/pip install -q numpy scipy pillow pyserial matplotlib west pyelftools)
+	test -d .venv || python3 -m venv .venv
+	.venv/bin/pip install -q numpy pillow pyserial matplotlib west pyelftools lz4 pymobiledevice3
 
-sync-core:
-	@rev=$$(git -C core rev-parse HEAD); for d in arduino zephyr-module ios android unoq; do \
-	  git -C $$d/core fetch -q ../../core 2>/dev/null || git -C $$d/core fetch -q "$(CURDIR)/core"; \
-	  git -C $$d/core checkout -q $$rev && echo "$$d/core -> $$rev"; done
+sync-core:        # refuses a dirty core/, stops at the first component that fails: tools/sync_core.sh
+	@sh tools/sync_core.sh "$(CURDIR)"
 
 test:
 	$(PY) core/tools/test_core.py --quick
