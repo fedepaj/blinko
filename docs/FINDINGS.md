@@ -94,8 +94,8 @@ What follows from each:
   sensor rows before the receiver (3.3 rows per chip at T = 105 µs) and asks
   the system for sustained-performance mode.
 
-With T = 105 µs and three copies of every packet the phone decodes about 23
-distinct packets per second in RAW capture (70 in a 3 s recording).
+With T = 105 µs and three copies of every packet the phone decodes about 40
+distinct packets per second in RAW capture, and about 22 with one copy.
 
 ## Bright LEDs destroy their own signal, and the halo saves it
 

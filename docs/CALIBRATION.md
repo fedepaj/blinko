@@ -129,7 +129,7 @@ The two phones the project is measured on, back wide camera.
 | usable T | 45–60 µs (exposure 0.25–0.33 T; 3–4 rows per chip) | 90–120 µs (exposure 0.5–0.65 T) |
 | packet height | 241–322 rows | 930–1240 sensor rows |
 | repetition | 1 | 2–3 |
-| distinct packets per second, Nano R4 a few cm away, three streams | about 470 at T = 60 µs, about 240 at T = 45 µs | about 23 at T = 105 µs with 3 copies |
+| distinct packets per second, Nano R4 a few cm away, three streams | about 470 at T = 60 µs, about 240 at T = 45 µs | about 40 at T = 105 µs with 3 copies, about 22 with one |
 
 On the Samsung in RAW the strobe calibration reads 2.83 µs per row where the
 clock of the decoded packets gives 2.65 µs. The packets' clock is the figure

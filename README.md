@@ -53,7 +53,7 @@ from pilot blocks the transmitter inserts periodically.
 Measured with a Nano R4 a few centimetres from the camera, sending three
 streams: an iPhone 14 at 120 fps decodes **about 470 distinct packets per
 second** at the default T = 60 µs with one copy of each packet (about 240 at
-T = 45 µs); a Samsung S21 FE at 30 fps in RAW capture decodes about 23 with
+T = 45 µs); a Samsung S21 FE at 30 fps in RAW capture decodes about 40 with
 T = 105 µs and each packet sent three times. The reason for a crash reaches
 the phone in one or two seconds.
 
