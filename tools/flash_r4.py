@@ -61,7 +61,7 @@ def main():
     if not serial:
         sys.exit("board did not enter DFU mode (double-tap reset and retry); DFU devices seen: %s" % dfu_serials())
     print(f"flashing DFU device {serial}")
-    cmd = [dfu, "--device", "2341:0374", "-S", serial, "-a", "0", "-D", a.bin, "-R"]
+    cmd = [dfu, "--device", "2341:0374", "-S", serial, "-a", "0", "-D", a.bin, "--reset"]   # this dfu-util (0.11-arduino) wants the long form: "-R" demands an argument
     r = subprocess.run(cmd, capture_output=True, text=True)
     tail = [l for l in (r.stdout + r.stderr).splitlines() if l and not l.startswith("Download")][-3:]
     print("\n".join(tail))
