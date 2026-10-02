@@ -52,14 +52,10 @@ experiments (chip × repeat × exposure) on both phones at once.
 2. **Parameters per phone.** T, repetition and brightness are set on the board
    by hand today; the receiver knows the exposure, the row time, the blob
    height and the saturation, so the app can recommend them.
-3. **Pilots at few rows per chip.** At 3 rows per chip with a 5-row exposure
-   the Samsung's RAW path finds the pilot block but its three pulses read
-   nearly white, so it stays in direct mode (no unmixing). Why the colours
-   wash out there is not understood yet.
-4. **UNO Q kiosk** (`unoq/`): the receiver on a board with a display and a CSI
+3. **UNO Q kiosk** (`unoq/`): the receiver on a board with a display and a CSI
    camera instead of a phone. Written and verified against recordings, still to
    be brought up on the hardware.
-5. **Merging lights that carry the same stream** is done from packet timing;
+4. **Merging lights that carry the same stream** is done from packet timing;
    the remaining case is two boards transmitting genuinely identical content.
 
 ## Things we would like to try
