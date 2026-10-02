@@ -96,7 +96,7 @@ Arduino:
 #include <Blinko.h>
 
 void setup() {
-  Blinko.begin();                       // T = 60 µs, RGB + built-in LED
+  Blinko.begin();                       // T = 60 µs, RGB + built-in LED; the death loop always uses T = 120 µs, 3 copies
   Blinko.info("boot ok fw=%s", VERSION);
   Blinko.checkpoint("init-sensors");    // reported if a watchdog reset follows
   if (!sensor.begin()) Blinko.fatal(3, "sensor init");   // never returns: blinks the reason
@@ -183,8 +183,10 @@ the submodule pointer in each component.
   avoids the ISP's highlight compression, and the receiver's packet repetition
   and sync-free framing are what make 30 fps phones work.
 - **Very bright LEDs** saturate the sensor and lose the short gaps in their
-  core; the receiver recovers them from the halo around the blob, but moving
-  back a little, or a longer chip, is the better fix.
+  core; the receiver recovers them from the halo around the blob. Moving back
+  a little is the fix; the board can also dim its LEDs (`bright 40`, a PWM on
+  the LED pins), which helps at a few centimetres but not at one, where the
+  core stays clipped while the halo the receiver reads fades.
 - This is a **one-way, line-of-sight, short-range** link of a few kbit/s. It is
   meant for logs and post-mortems, not for bulk data.
 
